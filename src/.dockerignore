@@ -3,6 +3,7 @@ __pycache__/
 *.pyo
 *.pyd
 *.log
-__pycache__/
 data/
 venv/
+.env
+.env.*
