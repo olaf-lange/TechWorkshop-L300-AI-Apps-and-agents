@@ -87,7 +87,12 @@ def get_request_embedding(text: str) -> list[float] | None:
         logger.error("Embedding env vars not fully set; failing embedding generation.")
         return None
 
-    url = EMBEDDING_ENDPOINT.rstrip("/") + f"/openai/deployments/{EMBEDDING_DEPLOYMENT}/embeddings?api-version={EMBEDDING_API_VERSION}"
+    # Strip any existing path so only base URL (scheme + host) is used,
+    # preventing a doubled path if the env var was set to the full deployment URL.
+    from urllib.parse import urlparse
+    parsed = urlparse(EMBEDDING_ENDPOINT)
+    base_url = f"{parsed.scheme}://{parsed.netloc}"
+    url = base_url + f"/openai/deployments/{EMBEDDING_DEPLOYMENT}/embeddings?api-version={EMBEDDING_API_VERSION}"
     headers = {
         "Content-Type": "application/json",
         "api-key": EMBEDDING_API_KEY,
