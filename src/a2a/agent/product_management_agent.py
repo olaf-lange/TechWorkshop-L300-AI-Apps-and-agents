@@ -17,7 +17,7 @@ from agent_framework import (
     tool,
 )
 from agent_framework.openai import OpenAIChatClient
-from agent_framework.azure import AzureOpenAIChatClient
+from agent_framework.azure import AzureOpenAIResponsesClient
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -55,11 +55,11 @@ def get_chat_completion_service(
     raise ValueError(f'Unsupported service name: {service_name}')
 
 
-def _get_azure_openai_chat_completion_service() -> AzureOpenAIChatClient:
+def _get_azure_openai_chat_completion_service() -> AzureOpenAIResponsesClient:
     """Return Azure OpenAI chat completion service with managed identity.
 
     Returns:
-        AzureOpenAIChatClient: The configured Azure OpenAI service.
+        AzureOpenAIResponsesClient: The configured Azure OpenAI service.
     """
     endpoint = os.getenv('gpt_endpoint')
     deployment_name = os.getenv('gpt_deployment')
@@ -88,14 +88,14 @@ def _get_azure_openai_chat_completion_service() -> AzureOpenAIChatClient:
             api_version=api_version,
         )
         
-        return AzureOpenAIChatClient(
+        return AzureOpenAIResponsesClient(
             service_id=service_id,
             deployment_name=deployment_name,
             async_client=async_client,
         )
     else:
         # Fallback to API key authentication for local development
-        return AzureOpenAIChatClient(
+        return AzureOpenAIResponsesClient(
             service_id=service_id,
             deployment_name=deployment_name,
             endpoint=endpoint,
@@ -173,10 +173,11 @@ class AgentFrameworkProductManagementAgent:
             and user input requirement.
         """
         await self._ensure_session_exists(session_id)
-
+        #log NFO the user_input and session_id
+        logger.info(f"Invoking agent with session_id: {session_id} and user_input: {user_input}")
         # Use Agent Framework's run for a single shot
         response = await self.agent.run(
-            messages=user_input,
+            input=user_input,
             session=self.session,
             response_format=ResponseFormat,
         )
@@ -203,7 +204,7 @@ class AgentFrameworkProductManagementAgent:
         chunks: list[ChatContext] = []
 
         async for chunk in self.agent.run_stream(
-            messages=user_input,
+            input=user_input,
             session=self.session,
         ):
             if chunk.text:

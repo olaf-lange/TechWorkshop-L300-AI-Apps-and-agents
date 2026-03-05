@@ -14,6 +14,7 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 # In-memory session store (in production, use Redis or database)
 product_management_agent = AgentFrameworkProductManagementAgent()
 active_sessions: Dict[str, str] = {}
+
 class ChatMessage(BaseModel):
     """Chat message model"""
     message: str
@@ -50,6 +51,7 @@ async def send_message(chat_message: ChatMessage):
     except Exception as e:
         logger.error(f"Error processing chat message: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    
 @router.post("/stream")
 async def stream_message(chat_message: ChatMessage):
     """Stream a response from the product management agent"""
