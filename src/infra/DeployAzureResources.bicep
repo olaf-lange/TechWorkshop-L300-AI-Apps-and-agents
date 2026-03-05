@@ -15,7 +15,7 @@ var webAppName = '${uniqueString(resourceGroup().id)}-app'
 var appServicePlanName = '${uniqueString(resourceGroup().id)}-cosu-asp'
 var logAnalyticsName = '${uniqueString(resourceGroup().id)}-cosu-la'
 var appInsightsName = '${uniqueString(resourceGroup().id)}-cosu-ai'
-var webAppSku = 'S1'
+var webAppSku = 'P4mv4'
 var registryName = '${uniqueString(resourceGroup().id)}cosureg'
 var registrySku = 'Standard'
 
@@ -29,7 +29,7 @@ var tags = {
 
 // Ensure the current resource group has the required tag via a subscription-scoped module
 module updateRgTags 'updateRgTags.bicep' = {
-  name: 'updateRgTags'
+  name: 'updateRgTagsz'
   scope: subscription()
   params: {
     rgName: resourceGroup().name
