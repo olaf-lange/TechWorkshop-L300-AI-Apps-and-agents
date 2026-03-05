@@ -194,6 +194,9 @@ resource appServicePlan 'Microsoft.Web/serverFarms@2022-09-01' = {
 resource appServiceApp 'Microsoft.Web/sites@2022-09-01' = {
   name: webAppName
   location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     serverFarmId: appServicePlan.id
     httpsOnly: true
@@ -222,7 +225,12 @@ resource appServiceApp 'Microsoft.Web/sites@2022-09-01' = {
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
           value: appInsights.properties.InstrumentationKey
-      }]
+        }
+        {
+          name: 'FOUNDRY_ENDPOINT'
+          value: '${aiFoundry.properties.endpoint}api/projects/${aiProjectName}'
+        }
+      ]
     }
   }
   tags: tags
@@ -238,6 +246,7 @@ var cosmosDbBuiltInDataContributorRoleId = '00000000-0000-0000-0000-000000000002
 // var cosmosDbAccountReaderRoleId = 'fbdf93bf-df7d-467e-a4d2-9458aa1360c8'
 var cognitiveServicesOpenAIUserRoleId = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
 var cognitiveServicesContributorRoleId = '25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68'
+var azureAIDeveloperRoleId = '64702f94-c441-49e6-a78b-ef80e0188fee'
 
 @description('Assigns Cosmos DB Built-in Data Contributor role to the specified user')
 resource cosmosDbDataContributorRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2023-04-15' = {
@@ -284,9 +293,32 @@ resource cosmosDbProjectContributorRole 'Microsoft.Authorization/roleAssignments
   }
 }
 
+@description('Grants the App Service managed identity Azure AI Developer role on the AI Project so DefaultAzureCredential can call Foundry agents.')
+resource appServiceAIProjectDeveloperRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(aiProject.id, appServiceApp.id, azureAIDeveloperRoleId)
+  scope: aiProject
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', azureAIDeveloperRoleId)
+    principalId: appServiceApp.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+@description('Grants the App Service managed identity Azure AI Developer role on the AI Foundry account (needed for get_openai_client() calls).')
+resource appServiceAIFoundryDeveloperRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(aiFoundry.id, appServiceApp.id, azureAIDeveloperRoleId)
+  scope: aiFoundry
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', azureAIDeveloperRoleId)
+    principalId: appServiceApp.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 output cosmosDbEndpoint string = cosmosDbAccount.properties.documentEndpoint
 output storageAccountName string = storageAccount.name
 output container_registry_name string = containerRegistry.name
 output application_name string = appServiceApp.name
 output application_url string = appServiceApp.properties.hostNames[0]
+output foundry_endpoint string = '${aiFoundry.properties.endpoint}api/projects/${aiProjectName}'
 
