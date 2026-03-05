@@ -31,37 +31,23 @@ def generate_response(text_input):
         response (str): A Markdown-formatted response from the agent.
     """
 
-    # Prepare the full chat prompt with system and user messages
-    chat_prompt = [
-        {
-            "role": "system",
-            "content": [
-                {
-                    "type": "text",
-                    "text": """You are a helpful assistant working for Zava, a company that specializes in offering products to assist homeowners with do-it-yourself projects.
+    system_instructions = """You are a helpful assistant working for Zava, a company that specializes in offering products to assist homeowners with do-it-yourself projects.
                         Respond to customer inquiries with relevant product recommendations and DIY tips. If a customer asks for paint, suggest one of the following three colors: blue, green, and white.
                         If a customer asks for something not related to a DIY project, politely inform them that you can only assist with DIY-related inquiries.
                         Zava has a variety of store locations across the country. If a customer asks about store availability, direct the customer to the Miami store.
                     """
-                }
-            ]
-        },
-        {"role": "user", "content": text_input}
-    ]
 
-    # Call Azure OpenAI chat API
-    completion = client.chat.completions.create(
+    # Call Azure OpenAI Responses API
+    response = client.responses.create(
         model=deployment,
-        messages=chat_prompt,
-        max_completion_tokens=10000,
+        instructions=system_instructions,
+        input=text_input,
+        max_output_tokens=10000,
         top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0,
-        stop=None,
         stream=False
     )
     end_sum = time.time()
     print(f"generate_response Execution Time: {end_sum - start_time} seconds")
     # Return response content
-    return completion.choices[0].message.content
+    return response.output_text
 

@@ -139,38 +139,15 @@ def calculate_discount(CustomerID):
         prompt= "Bruno's total transaction price in this year"+ transaction_info + "and his data"+str(loyalty_info)
         # print(f"prompt:{prompt}")
         # print(f"Prompt for agent:{PROMPT}")
-        # Define chat prompt
-        chat_prompt = [
-            {
-                "role": "developer",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": PROMPT
-                    }
-                ]
-            },
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": prompt
-                    }
-                ]
-            }
-        ]
-
-        # Generate chat completion
-        completion = client.chat.completions.create(
+        # Generate response using Responses API
+        response = client.responses.create(
             model=deployment,
-            messages=chat_prompt,
-            max_completion_tokens=5000,
-            stop=None,
+            instructions=PROMPT,
+            input=prompt,
+            max_output_tokens=5000,
             stream=False
         )
-        response_dict = completion.model_dump()
-        response_message = response_dict["choices"][0]["message"]["content"]
+        response_message = response.output_text
         # Adding attributes to the current span
         span = trace.get_current_span()
         span.set_attribute("discount_logic_response", response_message)

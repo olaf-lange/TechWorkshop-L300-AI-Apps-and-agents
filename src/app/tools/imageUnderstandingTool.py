@@ -66,12 +66,8 @@ def image_describing_tool(image_input, conversation_history, query = None, mime_
     # Construct chat prompt
 
 
-    chat_prompt = [
-        {
-            "role": "system",
-            "content": "You are an AI assistant who is a tool to an agent. Reply as a tool to the agent. The agent will use your reply to do the next step."
-        }
-    ]
+    system_instruction = "You are an AI assistant who is a tool to an agent. Reply as a tool to the agent. The agent will use your reply to do the next step."
+    chat_prompt = []
 
     if image_mode == "url":
         # HTTP image: use image URL
@@ -124,21 +120,16 @@ def image_describing_tool(image_input, conversation_history, query = None, mime_
 
     # Step 3: Model call with error handling
     try:
-        completion = az_model_client.chat.completions.create(
+        response = az_model_client.responses.create(
             model=gpt_deployment,
-            messages=chat_prompt,
-            max_tokens=1200,
+            instructions=system_instruction,
+            input=chat_prompt,
+            max_output_tokens=1200,
             temperature=0.7,
             top_p=0.95,
-            frequency_penalty=0,
-            presence_penalty=0,
-            stop=None,
             stream=False
         )
     except Exception as e:
         return f"Error: Model call failed ({str(e)}). Check network connection and credentials."
 
-    response_dict = completion.model_dump()
-    response_message = response_dict["choices"][0]["message"]["content"]
-    
-    return response_message
+    return response.output_text
