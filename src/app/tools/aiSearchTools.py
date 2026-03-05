@@ -58,7 +58,12 @@ def get_request_embedding(text: str) -> list[float] | None:
     if not EMBEDDING_ENDPOINT or not EMBEDDING_DEPLOYMENT or not EMBEDDING_API_KEY or not EMBEDDING_API_VERSION:
         raise ValueError("Embedding endpoint configuration missing. Set EMBEDDING_ENDPOINT, EMBEDDING_DEPLOYMENT, EMBEDDING_API_KEY, EMBEDDING_API_VERSION")
 
-    url = EMBEDDING_ENDPOINT.rstrip("/") + f"/openai/deployments/{EMBEDDING_DEPLOYMENT}/embeddings?api-version={EMBEDDING_API_VERSION}"
+    # Strip any existing path from the endpoint so only the base URL (scheme + host) is used,
+    # preventing a doubled path if the env var was set to the full deployment URL.
+    from urllib.parse import urlparse
+    parsed = urlparse(EMBEDDING_ENDPOINT)
+    base_url = f"{parsed.scheme}://{parsed.netloc}"
+    url = base_url + f"/openai/deployments/{EMBEDDING_DEPLOYMENT}/embeddings?api-version={EMBEDDING_API_VERSION}"
     headers = {
         "Content-Type": "application/json",
         "api-key": EMBEDDING_API_KEY,
